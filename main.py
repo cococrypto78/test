@@ -16,7 +16,7 @@ def run_api():
 
 
 async def run_cycle(cycle_name: str, campaign_id: int | None = None):
-    from crm.database import get_session, init_db
+    from crm.database import session_context as get_session, init_db
     from crm.repository import ProspectRepository
     from agents.orchestrator import Orchestrator
 
