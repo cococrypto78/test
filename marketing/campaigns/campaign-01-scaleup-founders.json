@@ -1,0 +1,55 @@
+{
+  "agent_config": {
+    "name": "ScaleUp_Premium_Network_Outreach_v1",
+    "version": "1.0.0",
+    "created_at": "2026-05-17",
+    "campaign": "Funding Intelligence Outreach — Series A/B Post-Levée",
+    "ai_model": "claude-sonnet-4-6",
+    "language": "fr",
+    "target_icp": {
+      "industries": ["SaaS B2B","FinTech","LegalTech","HRTech","HealthTech","Marketplace B2B","Data & AI","E-commerce B2B"],
+      "company_size": "50-500",
+      "headcount_range": {"min": 50, "max": 500},
+      "funding_stage": ["Series A","Series B","Late Seed (>3M€)"],
+      "funding_recency_days": 180,
+      "funding_amount_range": {"min_eur": 3000000, "max_eur": 50000000},
+      "titles": ["CEO","Co-Founder","Founder","Directeur Général","DG","CFO","Chief Financial Officer","DAF","COO","Chief Operating Officer","Managing Director"],
+      "seniority_levels": ["C-Suite","Founder","VP","Director"],
+      "keywords": ["scale-up","startup","levée de fonds","Series A","Series B","hypercroissance","expansion internationale","structuration équipe","recrutement cadres"],
+      "pain_points": [
+        "Manque de temps pour sourcer des prestataires de confiance",
+        "Mauvaises expériences avec des cabinets inadaptés au stage startup",
+        "Coût élevé des erreurs juridiques post-levée",
+        "Difficulté à trouver des CFO/DRH fractionnaires seniors disponibles",
+        "Absence de réseau de prestataires validés par des pairs",
+        "Pression des investisseurs pour professionnaliser les fonctions support"
+      ],
+      "locations": ["Paris","Île-de-France","Lyon","Bordeaux","Nantes","Toulouse","Bruxelles","Remote France"]
+    },
+    "channels": ["linkedin","email","instagram"],
+    "daily_limit": 120,
+    "min_qualification_score": 65,
+    "product_description": "Plateforme SaaS de mise en relation exclusive donnant accès aux fondateurs et dirigeants de scale-ups à un réseau pré-vetté de 80+ prestataires premium dans 5 verticales : juridique, finance, RH, tech et corporate luxury.",
+    "value_proposition": "Accédez en 48h aux meilleurs prestataires utilisés par les scale-ups Series A/B — sans mois de sourcing, sans mauvaises surprises. Économisez 2 à 4 mois de recherche et évitez les erreurs coûteuses liées aux prestataires inadaptés à votre stage de croissance.",
+    "target_outcome": "Obtenir 20 demos qualifiées par mois avec des fondateurs/CFO de startups Series A/B, convertir 25% en clients à 5 000-20 000€/an.",
+    "qualification_scoring": {
+      "Series A": 25,
+      "Series B": 30,
+      "company_50_200": 20,
+      "company_200_500": 25,
+      "CEO_Founder": 25,
+      "CFO_DAF": 20,
+      "COO_HeadOps": 15,
+      "funding_within_30_days": 15,
+      "funding_within_90_days": 5,
+      "location_France": 7,
+      "Paris_IDF": 10
+    },
+    "safety": {
+      "gdpr_compliant": true,
+      "unsubscribe_link": true,
+      "max_touches_per_contact": 5,
+      "human_review_above_score": 95
+    }
+  }
+}
