@@ -5,27 +5,39 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
 from crm.database import Base
-from crm import models  # noqa: F401 — registers all models
+from crm import models  # noqa: F401
 from config.settings import settings
 
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Use asyncpg URL for async engine
+# MIGRATION_DATABASE_URL (localhost) is used when running alembic from the host.
+# DATABASE_URL (host.docker.internal) is used inside Docker containers.
+migration_url = getattr(settings, "migration_database_url", None) or \
+    settings.database_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://", 1).replace(
+        "host.docker.internal", "localhost", 1
+    )
+config.set_main_option("sqlalchemy.url", migration_url)
 
 target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
-    context.configure(url=url, target_metadata=target_metadata, literal_binds=True, dialect_opts={"paramstyle": "named"})
+    url = settings.database_url  # psycopg2 for offline mode
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
     with context.begin_transaction():
         context.run_migrations()
 

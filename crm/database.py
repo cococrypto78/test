@@ -4,12 +4,24 @@ from sqlalchemy.orm import DeclarativeBase
 from config.settings import settings
 
 
+def _async_url(url: str) -> str:
+    """Convert psycopg2 URL to asyncpg. Replace host.docker.internal with localhost when not in Docker."""
+    import socket
+    url = url.replace("postgresql+psycopg2://", "postgresql+asyncpg://", 1)
+    try:
+        socket.gethostbyname("host.docker.internal")
+    except socket.gaierror:
+        # Not running inside Docker — use localhost instead
+        url = url.replace("host.docker.internal", "localhost", 1)
+    return url
+
+
 class Base(DeclarativeBase):
     pass
 
 
 engine = create_async_engine(
-    settings.database_url,
+    _async_url(settings.database_url),
     echo=settings.is_development,
     pool_pre_ping=True,
     pool_size=10,

@@ -6,7 +6,14 @@ app = Celery(
     "sales_agents",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["tasks.scheduled_tasks"],
+    include=[
+        "tasks.draft_campaign",
+        "tasks.send_approved",
+        "tasks.check_replies",
+        "tasks.classify_reply",
+        "tasks.refresh_voice_examples",
+        "tasks.embed_message",
+    ],
 )
 
 app.conf.update(
@@ -19,29 +26,17 @@ app.conf.update(
     task_acks_late=True,
     worker_prefetch_multiplier=1,
     beat_schedule={
-        "discovery-every-6h": {
-            "task": "tasks.scheduled_tasks.discovery_task",
-            "schedule": crontab(minute=0, hour="*/6"),
+        "send-approved-every-5min": {
+            "task": "tasks.send_approved.send_approved_messages",
+            "schedule": crontab(minute="*/5"),
         },
-        "qualification-every-2h": {
-            "task": "tasks.scheduled_tasks.qualification_task",
-            "schedule": crontab(minute=30, hour="*/2"),
-        },
-        "outreach-every-1h": {
-            "task": "tasks.scheduled_tasks.outreach_task",
-            "schedule": crontab(minute=15, hour="*"),
-        },
-        "followup-every-30min": {
-            "task": "tasks.scheduled_tasks.followup_task",
-            "schedule": crontab(minute="*/30"),
-        },
-        "conversion-check-every-15min": {
-            "task": "tasks.scheduled_tasks.conversion_check_task",
+        "check-replies-every-15min": {
+            "task": "tasks.check_replies.check_all_replies",
             "schedule": crontab(minute="*/15"),
         },
-        "daily-summary-9am": {
-            "task": "tasks.scheduled_tasks.daily_summary_task",
-            "schedule": crontab(hour=9, minute=0),
+        "refresh-voice-examples-daily": {
+            "task": "tasks.refresh_voice_examples.refresh_all_tenants",
+            "schedule": crontab(hour=2, minute=0),
         },
     },
 )

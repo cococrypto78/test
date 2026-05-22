@@ -1,81 +1,61 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
-from typing import Optional, List
+from typing import Optional
 import os
 
 
 class Settings(BaseSettings):
     # AI
-    anthropic_api_key: str
-    claude_model: str = "claude-sonnet-4-5"
+    anthropic_api_key: str = ""
+    claude_drafting_model: str = "claude-sonnet-4-6"
+    claude_classification_model: str = "claude-haiku-4-5-20251001"
     claude_max_tokens: int = 4096
 
     # Database
-    database_url: str
+    database_url: str = "postgresql+psycopg2://sales_agent:changeme@localhost:5432/sales_agent_prod"
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"
 
-    # LinkedIn
-    linkedin_email: str = ""
-    linkedin_password: str = ""
+    # Twitter/X — API officielle v2 uniquement
+    x_api_bearer_token: str = ""
+    x_api_key: str = ""
+    x_api_secret: str = ""
+    x_access_token: str = ""
+    x_access_token_secret: str = ""
 
-    # Twitter/X
-    twitter_api_key: str = ""
-    twitter_api_secret: str = ""
-    twitter_access_token: str = ""
-    twitter_access_secret: str = ""
-    twitter_bearer_token: str = ""
+    # Instagram — Meta Graph API uniquement (compte Business requis)
+    meta_graph_access_token: str = ""
+    meta_page_id: str = ""
+    instagram_business_account_id: str = ""
 
-    # Instagram
-    instagram_username: str = ""
-    instagram_password: str = ""
-    instagram_session_file: str = "instagram_session.json"
+    # Email — Postmark uniquement
+    postmark_server_token: str = ""
+    email_sending_domain: str = ""
 
-    # TikTok
-    tiktok_username: str = ""
-    tiktok_password: str = ""
-
-    # Email / SMTP
-    smtp_host: str = "smtp.gmail.com"
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_password: str = ""
-    smtp_from: str = ""
-    smtp_from_name: str = "Sales Team"
-
-    # API Auth
-    api_username: str = "admin"
-    api_password_hash: str = "$2b$12$dummy.hash.change.in.production"
-
-    # Notifications
-    human_alert_email: str = ""
-    webhook_url: Optional[str] = None
+    # Stripe
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
 
     # API Security
     secret_key: str = "change-me-in-production-32chars!!"
     access_token_expire_minutes: int = 60 * 24
 
-    # Proxies
-    proxy_list: str = ""
+    # Monitoring
+    sentry_dsn: str = ""
+
+    # Backup — Scaleway Object Storage
+    scw_access_key: str = ""
+    scw_secret_key: str = ""
+    scw_bucket_name: str = ""
+    scw_region: str = "fr-par"
 
     # Rate limits
-    max_daily_connections_linkedin: int = 20
-    max_daily_dms_instagram: int = 50
-    max_daily_dms_twitter: int = 100
-    max_daily_emails: int = 200
-    max_daily_dms_tiktok: int = 30
+    max_daily_messages_per_tenant: int = 100
 
     # App
     app_env: str = "production"
     log_level: str = "INFO"
     api_port: int = 8000
-
-    @property
-    def proxies(self) -> List[str]:
-        if not self.proxy_list:
-            return []
-        return [p.strip() for p in self.proxy_list.split(",") if p.strip()]
 
     @property
     def is_development(self) -> bool:

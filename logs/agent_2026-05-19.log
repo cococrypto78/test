@@ -1,0 +1,2 @@
+2026-05-19 22:31:39 | ERROR    | ai.drafting:92 - [Drafting] Claude API error: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CbCikgbzh4mBcE5QD1dr8'}
+2026-05-19 23:09:58 | INFO     | ai.drafting:88 - [Drafting] tenant=26ff978e-8348-4814-9bf2-2b422aac083f channel=email tokens_in=234 tokens_out=200 cost=$0.0037
