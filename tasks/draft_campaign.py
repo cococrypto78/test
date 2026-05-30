@@ -10,24 +10,29 @@ logger = get_task_logger(__name__)
 
 
 def run_async(coro):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
+    return asyncio.run(coro)
+
+
+def _make_session_factory():
+    """Crée un moteur asyncpg frais pour le loop Celery — évite le conflit d'event loop."""
+    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+    from sqlalchemy.pool import NullPool
+    from crm.database import _async_url
+    from config.settings import settings
+    engine = create_async_engine(_async_url(settings.database_url), poolclass=NullPool)
+    return async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 @app.task(bind=True, max_retries=3, default_retry_delay=60)
 def draft_campaign_messages(self, tenant_id: str, campaign_id: str):
     """Drafte les messages pour tous les prospects d'une campagne."""
     async def _run():
-        from crm.database import session_context
         from crm.models import Campaign, Prospect, Message, MessageStatus, ChannelEnum
         from ai.drafting import draft_message
-        from sqlalchemy import select
+        from sqlalchemy import select, exists, not_, func
 
-        async with session_context() as session:
+        AsyncSession = _make_session_factory()
+        async with AsyncSession() as session:
             result = await session.execute(
                 select(Campaign).where(
                     Campaign.id == campaign_id,
@@ -39,10 +44,17 @@ def draft_campaign_messages(self, tenant_id: str, campaign_id: str):
                 logger.error(f"Campaign {campaign_id} not found for tenant {tenant_id}")
                 return
 
+            # Exclure les prospects qui ont déjà un message pour cette campagne
+            has_message = exists().where(
+                Message.tenant_id == tenant_id,
+                Message.prospect_id == Prospect.id,
+                Message.campaign_id == campaign_id,
+            )
             prospects_result = await session.execute(
                 select(Prospect).where(
                     Prospect.tenant_id == tenant_id,
                     Prospect.status == "discovered",
+                    not_(has_message),
                 ).limit(50)
             )
             prospects = prospects_result.scalars().all()
@@ -51,19 +63,24 @@ def draft_campaign_messages(self, tenant_id: str, campaign_id: str):
             drafted = 0
 
             for prospect in prospects:
-                for step in sequence:
+                # Compter les messages existants pour ce prospect+campagne afin de savoir
+                # à quelle étape de la séquence on en est
+                existing_count_result = await session.execute(
+                    select(func.count(Message.id)).where(
+                        Message.tenant_id == tenant_id,
+                        Message.prospect_id == prospect.id,
+                        Message.campaign_id == campaign_id,
+                    )
+                )
+                already_drafted = existing_count_result.scalar() or 0
+
+                for step_index, step in enumerate(sequence):
+                    if step_index < already_drafted:
+                        # Cette étape a déjà été draftée
+                        continue
+
                     channel = step.get("channel", "email")
                     context = step.get("context", campaign.name)
-
-                    existing = await session.execute(
-                        select(Message).where(
-                            Message.tenant_id == tenant_id,
-                            Message.prospect_id == prospect.id,
-                            Message.campaign_id == campaign_id,
-                        )
-                    )
-                    if existing.scalar_one_or_none():
-                        continue
 
                     try:
                         draft_text = await draft_message(
@@ -85,9 +102,10 @@ def draft_campaign_messages(self, tenant_id: str, campaign_id: str):
                             edit_count=0,
                         )
                         session.add(msg)
+                        await session.flush()
                         drafted += 1
                     except Exception as e:
-                        logger.error(f"Draft failed for prospect {prospect.id}: {e}")
+                        logger.error(f"Draft failed for prospect {prospect.id} step {step_index}: {e}")
 
             await session.commit()
             logger.info(f"[DraftCampaign] tenant={tenant_id} campaign={campaign_id} drafted={drafted}")
